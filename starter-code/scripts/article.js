@@ -50,29 +50,25 @@ Article.fetchAll = function() {
     // When rawData is already in localStorage,
     // we can load it with the .loadAll function above,
     // and then render the index page (using the proper method on the articleView object).
-    let ajaxEtag = $.ajax({
+    $.ajax({
       type: 'HEAD',
       url: 'data/hackerIpsum.json'
     }).done(function(data, message, xhr){
       console.log(xhr.getResponseHeader('ETag'));
-      return(xhr.getResponseHeader('ETag'));
-    })
-    if (ajaxEtag === JSON.parse(localStorage.getItem('Etag'))) {
-      Article.loadAll(JSON.parse(localStorage.getItem('rawData')));
-      articleView.initIndexPage();
-    } else {
-      $.getJSON('/data/hackerIpsum.json').done(function(rawData){
-        Article.loadAll(rawData);
-        localStorage.setItem('rawData', JSON.stringify(rawData));
-      });
-      $.ajax({
-        type: 'HEAD',
-        url: 'data/hackerIpsum.json'
-      }).done(function(data, message, xhr){
-        localStorage.setItem('ETag', JSON.stringify(xhr.getResponseHeader('ETag')));
+      if (xhr.getResponseHeader('ETag') === JSON.parse(localStorage.getItem('ETag'))) {
+        console.log('etags match');
+        Article.loadAll(JSON.parse(localStorage.getItem('rawData')));
         articleView.initIndexPage();
-      });
-    }
+      } else {
+        $.getJSON('/data/hackerIpsum.json').done(function(rawData){
+          Article.loadAll(rawData);
+          localStorage.rawData = JSON.stringify(rawData);
+          localStorage.ETag = JSON.stringify(xhr.getResponseHeader('ETag'));
+          console.log('else1 etags dont match');
+          articleView.initIndexPage();
+        });
+      }
+    })
     //DONE: What do we pass in to loadAll()?
     //DONE: What method do we call to render the index page?
   } else {
@@ -90,7 +86,7 @@ Article.fetchAll = function() {
       url: 'data/hackerIpsum.json'
     }).done(function(data, message, xhr){
       localStorage.setItem('ETag', JSON.stringify(xhr.getResponseHeader('ETag')));
-      console.log(xhr.getResponseHeader('ETag'));
+      console.log('else2 etag');
       articleView.initIndexPage();
     });
   }
